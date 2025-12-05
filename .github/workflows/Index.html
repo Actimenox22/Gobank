@@ -1,43 +1,1742 @@
-# Simple workflow for deploying static content to GitHub Pages
-name: Deploy static content to Pages
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GoBank - Mobile Banking</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <script>
+        // Check for system preference and set initial mode
+        const isSystemDarkMode = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+        if (isSystemDarkMode) {
+            document.documentElement.classList.add('dark');
+        }
+    </script>
 
-on:
-  # Runs on pushes targeting the default branch
-  push:
-    branches: ["main"]
+    <style>
+        /* Custom styles for the mobile-first design */
+        :root {
+            /* Light Mode Variables */
+            --primary-color: #C31F32; /* GoBank Red */
+            --primary-hover: #A71C2B;
+            --background-color: #f7f7f7;
+            --card-background: #ffffff;
+            --text-color-primary: #1f2937; /* Gray 800 */
+            --text-color-secondary: #4b5563; /* Gray 600 */
+        }
+        
+        .dark {
+            /* Dark Mode Variables (Black and Purple) */
+            --primary-color: #7C3AED; /* Purple 500 */
+            --primary-hover: #6D28D9;
+            --background-color: #111827; /* Gray 900 */
+            --card-background: #1f2937; /* Gray 800 */
+            --text-color-primary: #f3f4f6; /* Gray 100 */
+            --text-color-secondary: #9ca3af; /* Gray 400 */
+        }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--background-color);
+            color: var(--text-color-primary);
+            overflow-x: hidden;
+            touch-action: pan-y;
+            transition: background-color 0.3s, color 0.3s;
+        }
 
-  # Allows you to run this workflow manually from the Actions tab
-  workflow_dispatch:
+        /* Custom scrollbar for better look, though mainly on desktop */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: var(--background-color); }
+        ::-webkit-scrollbar-thumb { background: var(--text-color-secondary); border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #555; }
+        
+        /* Style for the active nav item */
+        .nav-item.active {
+            color: var(--primary-color);
+            border-top: 2px solid var(--primary-color);
+        }
+        
+        /* Style for the red/purple header card in the dashboard */
+        .account-card-active {
+            background-color: var(--primary-color);
+            color: white;
+            box-shadow: 0 10px 15px -3px rgba(124, 58, 237, 0.4), 0 4px 6px -2px rgba(124, 58, 237, 0.2);
+            transition: all 0.3s;
+        }
 
-# Sets permissions of the GITHUB_TOKEN to allow deployment to GitHub Pages
-permissions:
-  contents: read
-  pages: write
-  id-token: write
+        /* GoBank Logo Style */
+        .gobank-logo {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            border: 4px solid white;
+            background: linear-gradient(135deg, #C31F32, #9C1929); /* Vintage Red */
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+            font-size: 24px;
+            font-weight: bold;
+            color: white;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+            transition: all 0.3s;
+        }
+        
+        .dark .gobank-logo {
+            background: linear-gradient(135deg, #7C3AED, #5B21B6); /* Vintage Purple */
+            border: 4px solid var(--background-color);
+        }
 
-# Allow only one concurrent deployment, skipping runs queued between the run in-progress and latest queued.
-# However, do NOT cancel in-progress runs as we want to allow these production deployments to complete.
-concurrency:
-  group: "pages"
-  cancel-in-progress: false
+        /* Icon styles */
+        .icon-size { width: 24px; height: 24px; }
+        
+        /* Custom select dropdown */
+        .custom-select-wrapper { position: relative; }
+        .custom-select-wrapper::after {
+            content: '⌄';
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            pointer-events: none;
+            font-size: 1.5rem;
+            color: var(--text-color-secondary);
+        }
+        
+        /* Overrides for dynamic styling */
+        .bg-red-600 { background-color: var(--primary-color) !important; }
+        .hover\:bg-red-700:hover { background-color: var(--primary-hover) !important; }
+        .text-red-600 { color: var(--primary-color) !important; }
+        .border-red-600 { border-color: var(--primary-color) !important; }
+        .focus\:ring-red-500:focus { --tw-ring-color: var(--primary-color) !important; }
+        .focus\:border-red-500:focus { border-color: var(--primary-color) !important; }
+        .shadow-red-300 { --tw-shadow-color: rgba(195, 31, 50, 0.3) !important; }
+        .dark .shadow-red-300 { --tw-shadow-color: rgba(124, 58, 237, 0.3) !important; }
+        
+        /* Dark mode-specific overrides for general elements */
+        .dark .bg-white { background-color: var(--card-background) !important; color: var(--text-color-primary) !important; }
+        .dark .border-gray-100 { border-color: #374151 !important; }
+        .dark .text-gray-700 { color: #d1d5db !important; }
+        .dark .text-gray-500 { color: #9ca3af !important; }
+        .dark .text-gray-800 { color: var(--text-color-primary) !important; }
+        .dark input, .dark select {
+            background-color: #374151;
+            border-color: #4b5563;
+            color: var(--text-color-primary);
+        }
+    </style>
+</head>
+<body class="min-h-screen">
 
-jobs:
-  # Single deploy job since we're just deploying
-  deploy:
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-      - name: Setup Pages
-        uses: actions/configure-pages@v5
-      - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
-        with:
-          # Upload entire repository
-          path: '.'
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
+    <div id="loading-overlay" class="fixed inset-0 bg-white dark:bg-gray-900 flex flex-col items-center justify-center z-50 transition-opacity duration-500 opacity-0 pointer-events-none">
+        <div class="gobank-logo mb-6 animate-pulse">Go</div>
+        <div class="text-xl font-bold text-gray-800 dark:text-gray-100">Loading...</div>
+    </div>
+    <div id="mobile-menu" class="fixed top-0 left-0 h-full w-64 bg-white dark:bg-gray-800 shadow-xl p-4 md:hidden">
+        <div class="flex justify-between items-center mb-6">
+            <h2 class="text-xl font-bold text-gray-800 dark:text-gray-100">GoBank Menu</h2>
+            <button onclick="toggleMenu()" class="text-gray-500 hover:text-red-600 dark:hover:text-purple-500">
+                <i data-lucide="x" class="icon-size"></i>
+            </button>
+        </div>
+        <nav id="menu-links" class="space-y-3">
+            </nav>
+        <div class="absolute bottom-4 w-full pr-8">
+            <button onclick="logout()" class="w-full py-2 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition duration-150">
+                <div class="flex items-center justify-center"><i data-lucide="log-out" class="icon-size mr-2"></i>Sign Out</div>
+            </button>
+        </div>
+    </div>
+    <div id="app-container" class="max-w-md mx-auto bg-white dark:bg-gray-900 shadow-lg min-h-screen relative">
+
+        <header id="app-header" class="p-4 flex justify-between items-center border-b border-gray-100 dark:border-gray-700 sticky top-0 bg-white dark:bg-gray-900 z-10 hidden">
+            <button onclick="toggleMenu()" class="text-gray-700 hover:text-red-600 dark:text-gray-300 dark:hover:text-purple-500 transition duration-150">
+                <i data-lucide="menu" class="icon-size"></i>
+            </button>
+            <h1 class="text-lg font-bold text-gray-800 dark:text-gray-100 uppercase">GoBank</h1>
+            <div class="flex items-center space-x-3">
+                 <button onclick="toggleDarkMode()" class="relative text-gray-700 hover:text-red-600 dark:text-gray-300 dark:hover:text-purple-500 transition duration-150">
+                    <i id="mode-icon" data-lucide="moon" class="icon-size"></i>
+                </button>
+                <button onclick="navigateTo('notifications')" class="relative text-gray-700 hover:text-red-600 dark:text-gray-300 dark:hover:text-purple-500 transition duration-150">
+                    <i data-lucide="bell" class="icon-size"></i>
+                    <span id="notification-badge" class="absolute top-0 right-0 inline-flex items-center justify-center w-5 h-5 text-xs font-bold leading-none text-white bg-red-500 dark:bg-purple-500 rounded-full transform translate-x-1/2 -translate-y-1/2 hidden">
+                        0
+                    </span>
+                </button>
+                <i data-lucide="user-circle" class="icon-size text-gray-700 dark:text-gray-300"></i>
+            </div>
+        </header>
+
+        <main id="page-content" class="p-4 pb-20">
+            </main>
+
+        <nav id="bottom-nav" class="fixed bottom-0 left-0 right-0 max-w-md mx-auto bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 shadow-xl flex justify-around items-center h-16 z-20 hidden">
+            </nav>
+    </div>
+    <script>
+        // --- Configuration & Mock Data (Backend Simulation) ---
+
+        // List of 150 US Banks (Mock Data)
+        const usBanks = [
+            "JPMorgan Chase Bank", "Bank of America", "Wells Fargo Bank", "Citibank", "U.S. Bank",
+            "PNC Bank", "TD Bank", "Capital One Bank", "Goldman Sachs Bank USA", "Morgan Stanley Bank",
+            "BMO Harris Bank", "KeyBank", "Fifth Third Bank", "Truist Bank", "Discover Bank",
+            "Ally Bank", "Synchrony Bank", "Barclays Bank Delaware", "Comerica Bank", "Silicon Valley Bank",
+            "M&T Bank", "Huntington National Bank", "Regions Bank", "Western Alliance Bank", "Signature Bank",
+            "Zions Bank", "First Republic Bank", "Sallie Mae Bank", "BOKF, NA", "Associated Bank",
+            "First Citizens Bank & Trust Company", "Popular Bank", "Santander Bank", "Wintrust Bank", "MidFirst Bank",
+            "FirstBank", "Bank OZK", "Northern Trust Company", "Evolve Bank & Trust", "Charles Schwab Bank",
+            "State Street Bank and Trust Company", "The Bank of New York Mellon", "HSBC Bank USA", "Industrial Bank", "Banner Bank",
+            "Mechanics Bank", "NBT Bank", "Washington Trust Bank", "Ameris Bank", "New York Community Bank",
+            "Arvest Bank", "Columbia Bank", "Union Bank & Trust Company", "First Hawaiian Bank", "Cadence Bank",
+            "Independent Bank", "ServisFirst Bank", "Synovus Bank", "Sterling Bank & Trust, FSB", "United Bank",
+            "BankUnited", "First Western Bank & Trust", "Fulton Bank", "Commerce Bank", "TCF National Bank",
+            "First National Bank of Pennsylvania", "Old National Bank", "OceanFirst Bank", "Rockland Trust Company", "Bank of the West",
+            "Centennial Bank", "Atlantic Union Bank", "Bank of Hope", "Valley National Bank", "Peoples Bank",
+            "Simmons Bank", "City National Bank", "First Horizon Bank", "Texas Capital Bank", "Wauwatosa State Bank",
+            "HomeTrust Bank", "Farmers & Merchants Bank", "Community Bank", "Trustmark Bank", "Banc of California",
+            "Eastern Bank", "Nevada State Bank", "South State Bank", "Renasant Bank", "First National Bank of Omaha",
+            "Coastal Community Bank", "Farmers State Bank", "First United Bank", "Gateway Bank", "Heartland Bank",
+            "Heritage Bank", "Home Bank", "IBERIABANK", "Legacy Bank", "Liberty Bank",
+            "Metropolitan Bank", "National Bank of Arizona", "Pacific Western Bank", "Pathfinder Bank", "Peapack-Gladstone Bank",
+            "Plains Commerce Bank", "Premier Bank", "Quontic Bank", "RBC Bank", "Reliant Bank",
+            "River Bank & Trust", "Security Bank", "Silvergate Bank", "State Bank of India (California)", "Sunrise Bank",
+            "Sutton Bank", "TBK Bank", "The Columbia Bank", "The Farmers Bank", "Third Coast Bank",
+            "TowneBank", "Trustco Bank", "Umpqua Bank", "Union Bank", "United Fidelity Bank",
+            "Veritex Community Bank", "Vintage Bank", "Washington Federal Bank", "West Bank", "West Coast Bank",
+            "Woodforest National Bank", "Wyoming Bank & Trust", "Zions First National Bank", "Community Spirit Bank", "First Security Bank",
+            "First State Bank", "Mid-Illini Bank", "The Bank of Tioga", "American Express National Bank", "Synchrony Bank",
+            "Green Dot Bank", "Cross River Bank", "Varo Bank", "Chime", "SoFi Bank"
+        ];
+        
+        // Mock User/Account Database (Simulating Backend Storage)
+        let accounts = JSON.parse(localStorage.getItem('gobank_accounts')) || [
+            // Admin Account
+            { 
+                role: 'admin', 
+                username: 'admin', 
+                password: '101015admin201010', // Admin password
+                phone: 'N/A', 
+                email: 'admin@gobank.com', 
+                accountStatus: 'active',
+                bankFunds: { profit: 0.00, total: 0.00 }
+            },
+            // Mock User Account
+            {
+                role: 'user', 
+                username: 'testuser', 
+                password: 'password123',
+                phone: '555-123-4567',
+                email: 'test@user.com',
+                accountStatus: 'active',
+                checkingBalance: 1500.75,
+                savingsBalance: 5000.00,
+                checkingAccNumber: '1234567890',
+                savingsAccNumber: '0987654321',
+                cardDetails: { 
+                    type: 'debit', number: '4111222233334444', expiry: '12/26', cvv: '123' 
+                },
+                transactionPin: '1234',
+                notifications: [
+                    { type: 'Activity', description: 'Initial Deposit: $1500.75', time: 'Just now', icon: 'check-circle', color: 'text-green-600' },
+                    { type: 'Offer', description: 'New Platinum Card Offer Available!', time: '1 hour ago', icon: 'percent', color: 'text-purple-600' },
+                ],
+                history: [
+                    { date: 'Dec 01', description: 'Initial Deposit', amount: '+$1,500.75', type: 'credit', icon: 'trending-up', color: 'text-green-600' },
+                ]
+            }
+        ];
+        
+        // --- State Management ---
+        let currentUserId = null; // The index of the logged-in user in the accounts array
+        let currentPage = 'login';
+        const SERVICE_CHARGE_RATE = 0.005; // 0.5% transaction charge
+        
+        // --- Utility Functions ---
+
+        /**
+         * Simulates a server-side delay for better UX and logo display.
+         * @param {function} callback - Function to execute after the delay.
+         * @param {number} minDelay - Minimum delay in ms.
+         * @param {number} maxDelay - Maximum delay in ms.
+         */
+        function withLoading(callback, minDelay = 500, maxDelay = 2000) {
+            const loadingOverlay = document.getElementById('loading-overlay');
+            const delay = Math.random() * (maxDelay - minDelay) + minDelay;
+            
+            // Show loading screen
+            loadingOverlay.classList.remove('opacity-0', 'pointer-events-none');
+            loadingOverlay.classList.add('opacity-100');
+
+            setTimeout(() => {
+                // Execute callback
+                callback();
+                
+                // Hide loading screen
+                loadingOverlay.classList.remove('opacity-100');
+                loadingOverlay.classList.add('opacity-0');
+                
+                // Use a slight delay to ensure transition completes before pointer events are re-enabled
+                setTimeout(() => {
+                    loadingOverlay.classList.add('pointer-events-none');
+                }, 500);
+            }, delay);
+        }
+
+        /**
+         * Clears the current content and updates the active navigation elements.
+         * @param {string} pageId - The ID of the page to navigate to.
+         */
+        function updateUIForPage(pageId) {
+            currentPage = pageId;
+            const contentArea = document.getElementById('page-content');
+            contentArea.innerHTML = ''; // Clear existing content
+
+            // Update bottom nav bar
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.classList.remove('active');
+                if (item.getAttribute('data-page') === pageId) {
+                    item.classList.add('active');
+                }
+            });
+
+            // Update mobile menu links
+            document.querySelectorAll('.menu-link').forEach(item => {
+                item.classList.remove('font-bold', 'text-red-600', 'dark:text-purple-500');
+                if (item.getAttribute('data-page') === pageId) {
+                    item.classList.add('font-bold', 'text-red-600', 'dark:text-purple-500');
+                }
+            });
+            
+            // Close menu if it's open
+            if (document.getElementById('mobile-menu').classList.contains('open')) {
+                toggleMenu();
+            }
+
+            // Update notification badge count
+            if (isLoggedIn() && accounts[currentUserId].role === 'user') {
+                 const badge = document.getElementById('notification-badge');
+                 const count = accounts[currentUserId].notifications.length;
+                 badge.textContent = count;
+                 if (count > 0 && pageId !== 'notifications') {
+                    badge.classList.remove('hidden');
+                 } else {
+                    badge.classList.add('hidden');
+                 }
+            } else if (isLoggedIn() && accounts[currentUserId].role === 'admin') {
+                document.getElementById('notification-badge').classList.add('hidden');
+            }
+        }
+
+        /**
+         * Generic function to show a custom message box instead of alert().
+         * @param {string} message - The message to display.
+         * @param {boolean} isError - If true, displays an error style.
+         */
+        function showMessageBox(message, isError = false) {
+            const container = document.getElementById('app-container');
+            if (document.getElementById('message-box')) document.getElementById('message-box').remove();
+
+            const messageBox = document.createElement('div');
+            messageBox.id = 'message-box';
+            messageBox.className = 'fixed inset-0 bg-black bg-opacity-50 dark:bg-opacity-70 flex items-center justify-center p-4 z-50';
+            
+            const title = isError ? 'Error' : 'GoBank Message';
+            const buttonColor = isError ? 'bg-red-700 hover:bg-red-800' : 'bg-red-600 dark:bg-purple-600 hover:bg-red-700 dark:hover:bg-purple-700';
+
+            messageBox.innerHTML = `
+                <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-2xl max-w-sm w-full">
+                    <h3 class="text-xl font-bold mb-4 text-gray-800 dark:text-gray-100">${title}</h3>
+                    <p class="text-gray-600 dark:text-gray-300 mb-6 whitespace-pre-line">${message}</p>
+                    <button onclick="document.getElementById('message-box').remove()" class="w-full py-3 ${buttonColor} text-white font-semibold rounded-lg transition duration-200">
+                        Got It
+                    </button>
+                </div>
+            `;
+            container.appendChild(messageBox);
+        }
+
+        /**
+         * Check if a user is currently logged in.
+         * @returns {boolean}
+         */
+        function isLoggedIn() {
+            return currentUserId !== null;
+        }
+
+        /**
+         * Saves the current accounts array to local storage.
+         */
+        function saveAccounts() {
+            localStorage.setItem('gobank_accounts', JSON.stringify(accounts));
+        }
+
+        /**
+         * Generates a new unique account number.
+         * @returns {string}
+         */
+        function generateAccNumber() {
+            return Math.floor(1000000000 + Math.random() * 9000000000).toString();
+        }
+
+        /**
+         * Generates a mock card number.
+         * @returns {string}
+         */
+        function generateCardNumber() {
+            const prefix = '4' + Math.floor(Math.random() * 9); // Starts with 4 for Visa
+            let number = prefix;
+            for(let i=0; i<14; i++) {
+                number += Math.floor(Math.random() * 10);
+            }
+            return number;
+        }
+
+        /**
+         * Adds a notification/history entry for the current user.
+         * @param {string} type - 'Alert', 'Activity', 'Offer'.
+         * @param {string} description - The notification message.
+         * @param {string} amount - Transaction amount ('+$/-$') for history.
+         * @param {string} icon - Lucide icon name.
+         * @param {string} color - Tailwind color class.
+         * @param {number} userId - The ID of the user to notify.
+         */
+        function addActivity(type, description, amount, icon, color, userId = currentUserId) {
+            if (accounts[userId].role === 'user') {
+                // Add to notifications
+                accounts[userId].notifications.unshift({
+                    type: type,
+                    description: description,
+                    time: 'Just now',
+                    icon: icon,
+                    color: color
+                });
+                // Keep only the 5 most recent notifications
+                accounts[userId].notifications = accounts[userId].notifications.slice(0, 5);
+
+                // Add to transaction history
+                const date = new Date().toLocaleDateString('en-US', { month: 'short', day: '2-digit' });
+                accounts[userId].history.unshift({
+                    date: date,
+                    description: description.replace('Your ', '').replace(' was successful.', ''),
+                    amount: amount,
+                    type: amount.startsWith('+') ? 'credit' : 'debit',
+                    icon: icon,
+                    color: color
+                });
+            }
+            saveAccounts();
+        }
+        
+        // --- Dark Mode Logic ---
+
+        function toggleDarkMode() {
+            document.documentElement.classList.toggle('dark');
+            const mode = document.documentElement.classList.contains('dark') ? 'dark' : 'light';
+            localStorage.setItem('theme', mode);
+            updateModeIcon(mode);
+        }
+
+        function updateModeIcon(mode) {
+             const iconElement = document.getElementById('mode-icon');
+             if (iconElement) {
+                iconElement.setAttribute('data-lucide', mode === 'dark' ? 'sun' : 'moon');
+                lucide.createIcons();
+             }
+        }
+        
+        // --- Authentication Logic ---
+
+        /**
+         * Populates the Nav and Menu links based on the user's role.
+         */
+        function setupNavigation() {
+            const header = document.getElementById('app-header');
+            const bottomNav = document.getElementById('bottom-nav');
+            const menuLinks = document.getElementById('menu-links');
+            
+            header.classList.add('hidden');
+            bottomNav.classList.add('hidden');
+            menuLinks.innerHTML = '';
+
+            if (isLoggedIn()) {
+                header.classList.remove('hidden');
+                
+                const user = accounts[currentUserId];
+                let navHTML = '';
+                let menuHTML = '';
+
+                if (user.role === 'admin') {
+                    // Admin Navigation
+                    const adminPages = [
+                        { id: 'admin-dashboard', icon: 'shield', label: 'Admin Dashboard' },
+                        { id: 'admin-profits', icon: 'trending-up', label: 'Bank Funds & Profit' }
+                    ];
+
+                    adminPages.forEach(page => {
+                        menuHTML += `
+                            <a href="#" class="menu-link block text-gray-700 dark:text-gray-300 hover:text-red-600 dark:hover:text-purple-500 transition duration-150" data-page="${page.id}" onclick="navigateTo('${page.id}')">
+                                <div class="flex items-center"><i data-lucide="${page.icon}" class="icon-size mr-3"></i>${page.label}</div>
+                            </a>`;
+                        
+                        navHTML += `
+                            <a href="#" class="nav-item flex flex-col items-center justify-center p-2 text-gray-500 dark:text-gray-400 hover:text-red-600 dark:hover:text-purple-500 transition duration-150" data-page="${page.id}" onclick="navigateTo('${page.id}')">
+                                <i data-lucide="${page.icon}" class="icon-size"></i>
+                                <span class="text-xs mt-0.5">${page.label.split(' ')[0]}</span>
+                            </a>`;
+                    });
+                    bottomNav.classList.remove('hidden');
+                    
+                } else if (user.role === 'user') {
+                    // User Navigation
+                    const userPages = [
+                        { id: 'dashboard', icon: 'layout-dashboard', label: 'Dashboard' },
+                        { id: 'transfer', icon: 'send', label: 'Transfer' },
+                        { id: 'pay-bills', icon: 'receipt', label: 'Bill Pay' },
+                        { id: 'add-card', icon: 'credit-card', label: 'Card' },
+                        { id: 'notifications', icon: 'history', label: 'History' },
+                        { id: 'balance', icon: 'wallet', label: 'Check Balance' },
+                    ];
+
+                    // Bottom Nav (Max 5 items)
+                    userPages.slice(0, 5).forEach(page => {
+                         navHTML += `
+                            <a href="#" class="nav-item flex flex-col items-center justify-center p-2 text-gray-500 dark:text-gray-400 hover:text-red-600 dark:hover:text-purple-500 transition duration-150 ${page.id === 'dashboard' ? 'active' : ''}" data-page="${page.id}" onclick="navigateTo('${page.id}')">
+                                <i data-lucide="${page.icon}" class="icon-size"></i>
+                                <span class="text-xs mt-0.5">${page.label.split(' ')[0]}</span>
+                            </a>`;
+                    });
+
+                    // Mobile Menu (All items)
+                    userPages.forEach(page => {
+                        menuHTML += `
+                            <a href="#" class="menu-link block text-gray-700 dark:text-gray-300 hover:text-red-600 dark:hover:text-purple-500 transition duration-150" data-page="${page.id}" onclick="navigateTo('${page.id}')">
+                                <div class="flex items-center"><i data-lucide="${page.icon}" class="icon-size mr-3"></i>${page.label}</div>
+                            </a>`;
+                    });
+                    bottomNav.classList.remove('hidden');
+                }
+                
+                document.getElementById('bottom-nav').innerHTML = navHTML;
+                document.getElementById('menu-links').innerHTML = menuHTML;
+                lucide.createIcons();
+
+            } else {
+                // Not logged in - hide app parts
+                header.classList.add('hidden');
+                bottomNav.classList.add('hidden');
+            }
+        }
+        
+        /**
+         * Renders the Login Page content.
+         */
+        function getLoginPageContent() {
+            return `
+                <div class="flex flex-col items-center justify-center min-h-[calc(100vh-80px)] p-4">
+                    <div class="gobank-logo mb-10">Go</div>
+                    <h2 class="text-3xl font-bold text-gray-800 dark:text-gray-100 mb-6">Welcome Back</h2>
+                    
+                    <form onsubmit="handleLogin(event)" class="w-full max-w-xs space-y-6">
+                        <div>
+                            <label for="login-username" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Username / Email</label>
+                            <input type="text" id="login-username" name="username" required placeholder="Enter username or email" class="w-full p-3 border border-gray-300 dark:border-gray-700 dark:bg-gray-700 rounded-lg focus:ring-red-500 dark:focus:ring-purple-500 focus:border-red-500 dark:focus:border-purple-500">
+                        </div>
+                        <div>
+                            <label for="login-password" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Password</label>
+                            <input type="password" id="login-password" name="password" required placeholder="Enter password" class="w-full p-3 border border-gray-300 dark:border-gray-700 dark:bg-gray-700 rounded-lg focus:ring-red-500 dark:focus:ring-purple-500 focus:border-red-500 dark:focus:border-purple-500">
+                        </div>
+                        <button type="submit" class="w-full py-4 bg-red-600 dark:bg-purple-600 text-white font-bold rounded-xl hover:bg-red-700 dark:hover:bg-purple-700 transition duration-200 shadow-lg">
+                            Log In
+                        </button>
+                    </form>
+                    
+                    <button onclick="navigateTo('signup')" class="mt-6 text-sm text-red-600 dark:text-purple-400 hover:underline">
+                        Need an account? Sign Up
+                    </button>
+                    
+                    <button onclick="toggleDarkMode()" class="mt-8 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 flex items-center">
+                        <i id="mode-icon-login" data-lucide="${document.documentElement.classList.contains('dark') ? 'sun' : 'moon'}" class="w-5 h-5 mr-2"></i>
+                        Toggle Dark Mode
+                    </button>
+                </div>
+            `;
+        }
+
+        /**
+         * Handles the Login Form submission.
+         * @param {Event} event - The form submission event.
+         */
+        function handleLogin(event) {
+            event.preventDefault();
+            withLoading(() => {
+                const usernameOrEmail = document.getElementById('login-username').value;
+                const password = document.getElementById('login-password').value;
+                
+                const userIndex = accounts.findIndex(acc => 
+                    (acc.username === usernameOrEmail || acc.email === usernameOrEmail) && acc.password === password
+                );
+
+                if (userIndex !== -1) {
+                    currentUserId = userIndex;
+                    const user = accounts[currentUserId];
+                    
+                    if (user.accountStatus === 'frozen') {
+                        showMessageBox('Your account is currently frozen. Please contact customer support.', true);
+                        currentUserId = null; // Prevent login
+                        return;
+                    }
+
+                    setupNavigation();
+                    const initialPage = user.role === 'admin' ? 'admin-dashboard' : 'dashboard';
+                    navigateTo(initialPage);
+                } else {
+                    showMessageBox('Invalid credentials. Please check your username/email and password.', true);
+                }
+            });
+        }
+
+        /**
+         * Renders the Sign Up Page content.
+         */
+        function getSignupPageContent() {
+             return `
+                <div class="flex flex-col items-center justify-center min-h-[calc(100vh-80px)] p-4">
+                    <div class="gobank-logo mb-6">Go</div>
+                    <h2 class="text-3xl font-bold text-gray-800 dark:text-gray-100 mb-6">Create New Account</h2>
+                    
+                    <form onsubmit="handleSignup(event)" class="w-full max-w-xs space-y-4">
+                        <div>
+                            <label for="signup-username" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Username</label>
+                            <input type="text" id="signup-username" name="username" required placeholder="Choose a username" class="w-full p-3 border border-gray-300 dark:border-gray-700 dark:bg-gray-700 rounded-lg focus:ring-red-500 dark:focus:ring-purple-500 focus:border-red-500 dark:focus:border-purple-500">
+                        </div>
+                         <div>
+                            <label for="signup-email" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Email</label>
+                            <input type="email" id="signup-email" name="email" required placeholder="Your email address" class="w-full p-3 border border-gray-300 dark:border-gray-700 dark:bg-gray-700 rounded-lg focus:ring-red-500 dark:focus:ring-purple-500 focus:border-red-500 dark:focus:border-purple-500">
+                        </div>
+                        <div>
+                            <label for="signup-phone" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Phone Number</label>
+                            <input type="tel" id="signup-phone" name="phone" required placeholder="e.g., 555-123-4567" class="w-full p-3 border border-gray-300 dark:border-gray-700 dark:bg-gray-700 rounded-lg focus:ring-red-500 dark:focus:ring-purple-500 focus:border-red-500 dark:focus:border-purple-500">
+                        </div>
+                        <div>
+                            <label for="signup-password" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Password</label>
+                            <input type="password" id="signup-password" name="password" required placeholder="Create a strong password" class="w-full p-3 border border-gray-300 dark:border-gray-700 dark:bg-gray-700 rounded-lg focus:ring-red-500 dark:focus:ring-purple-500 focus:border-red-500 dark:focus:border-purple-500">
+                        </div>
+                        <div>
+                            <label for="signup-pin" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Transaction PIN (4 Digits)</label>
+                            <input type="text" id="signup-pin" name="pin" required placeholder="e.g., 1234" maxlength="4" class="w-full p-3 border border-gray-300 dark:border-gray-700 dark:bg-gray-700 rounded-lg focus:ring-red-500 dark:focus:ring-purple-500 focus:border-red-500 dark:focus:border-purple-500">
+                        </div>
+                        <button type="submit" class="w-full py-4 bg-red-600 dark:bg-purple-600 text-white font-bold rounded-xl hover:bg-red-700 dark:hover:bg-purple-700 transition duration-200 shadow-lg">
+                            Sign Up
+                        </button>
+                    </form>
+                    
+                    <button onclick="navigateTo('login')" class="mt-6 text-sm text-red-600 dark:text-purple-400 hover:underline">
+                        Already have an account? Log In
+                    </button>
+                </div>
+            `;
+        }
+
+        /**
+         * Handles the Sign Up Form submission.
+         * @param {Event} event - The form submission event.
+         */
+        function handleSignup(event) {
+            event.preventDefault();
+            withLoading(() => {
+                const username = document.getElementById('signup-username').value.toLowerCase();
+                const email = document.getElementById('signup-email').value.toLowerCase();
+                const phone = document.getElementById('signup-phone').value;
+                const password = document.getElementById('signup-password').value;
+                const pin = document.getElementById('signup-pin').value;
+                
+                // Basic validation
+                if (pin.length !== 4 || isNaN(pin)) {
+                    showMessageBox('Transaction PIN must be a 4-digit number.', true);
+                    return;
+                }
+
+                // Check for existing user
+                if (accounts.some(acc => acc.username === username || acc.email === email)) {
+                    showMessageBox('Username or Email already exists. Please choose another.', true);
+                    return;
+                }
+
+                // Create new account object
+                const newAccount = {
+                    role: 'user', 
+                    username: username, 
+                    password: password,
+                    phone: phone,
+                    email: email,
+                    accountStatus: 'active',
+                    checkingBalance: 0.00,
+                    savingsBalance: 0.00,
+                    checkingAccNumber: generateAccNumber(),
+                    savingsAccNumber: generateAccNumber(),
+                    cardDetails: { 
+                        type: 'debit', 
+                        number: generateCardNumber(), 
+                        expiry: '01/30', 
+                        cvv: Math.floor(100 + Math.random() * 900).toString() 
+                    },
+                    transactionPin: pin,
+                    notifications: [],
+                    history: []
+                };
+
+                accounts.push(newAccount);
+                saveAccounts();
+                
+                currentUserId = accounts.length - 1; // Log in to the newly created account
+                setupNavigation();
+                navigateTo('dashboard');
+                showMessageBox('Success! Your GoBank account has been created.', false);
+            });
+        }
+
+        /**
+         * Logs out the current user and navigates to the login page.
+         */
+        function logout() {
+            withLoading(() => {
+                currentUserId = null;
+                setupNavigation();
+                navigateTo('login');
+            });
+        }
+
+        // --- User Page Content Templates (Modified from original) ---
+
+        /**
+         * Generates the Dashboard/Home Page content.
+         */
+        function getDashboardContent() {
+            const user = accounts[currentUserId];
+            const totalBalance = user.checkingBalance + user.savingsBalance;
+
+            return `
+                <div class="mb-6 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg flex items-center shadow-inner">
+                    <i data-lucide="search" class="icon-size text-gray-500 dark:text-gray-400 mr-3"></i>
+                    <input type="text" placeholder="How can we help?" class="flex-grow bg-transparent text-gray-700 dark:text-gray-100 focus:outline-none placeholder-gray-500 dark:placeholder-gray-400">
+                </div>
+
+                <div class="mb-6">
+                    <h2 class="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-1">Hello, ${user.username}!</h2>
+                    <p class="text-sm text-green-600 font-medium flex items-center">
+                        <i data-lucide="check-circle" class="w-4 h-4 mr-1"></i> Successful Login
+                    </p>
+                </div>
+                
+                <div class="account-card-active p-4 rounded-xl shadow-lg mb-6">
+                    <h4 class="text-lg font-bold">GoBank Checking</h4>
+                    <p class="text-xs opacity-80 mb-2">Account - ${user.checkingAccNumber.slice(-4)}</p>
+                    <div class="flex justify-between items-center">
+                        <span class="text-3xl font-extrabold">$${user.checkingBalance.toFixed(2)}</span>
+                        <button class="bg-white text-red-600 dark:text-purple-600 font-semibold py-1 px-3 rounded-full hover:bg-gray-100 transition duration-150 text-sm" onclick="navigateTo('balance')">
+                            VIEW
+                        </button>
+                    </div>
+                </div>
+
+                <div class="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-md border border-gray-200 dark:border-gray-700 mb-6">
+                    <h4 class="text-lg font-bold text-gray-800 dark:text-gray-100">GoBank Savings</h4>
+                    <p class="text-xs text-gray-500 dark:text-gray-400 mb-2">Account - ${user.savingsAccNumber.slice(-4)}</p>
+                    <div class="flex justify-between items-center">
+                        <span class="text-2xl font-extrabold text-gray-700 dark:text-gray-200">$${user.savingsBalance.toFixed(2)}</span>
+                        <button class="text-red-600 dark:text-purple-500 font-semibold border border-red-600 dark:border-purple-500 py-1 px-3 rounded-full hover:bg-red-50 dark:hover:bg-purple-900 transition duration-150 text-sm" onclick="navigateTo('balance')">
+                            VIEW
+                        </button>
+                    </div>
+                </div>
+
+                <button onclick="navigateTo('dashboard')" class="w-full py-3 bg-white dark:bg-gray-800 border-2 border-red-600 dark:border-purple-500 text-red-600 dark:text-purple-500 font-bold rounded-xl hover:bg-red-50 dark:hover:bg-gray-700 transition duration-200 shadow-md">
+                    Refresh Balances
+                </button>
+            `;
+        }
+        
+        /**
+         * Generates the Make Transfer Page content.
+         */
+        function getTransferContent() {
+            const user = accounts[currentUserId];
+            // Function to generate the options for the 150 banks list
+            const bankOptions = usBanks.map(bank => `<option value="${bank}">${bank}</option>`).join('');
+
+            return `
+                <h2 class="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-6">Make a Transfer</h2>
+                
+                <form onsubmit="handleTransfer(event)" class="space-y-6">
+
+                    <div>
+                        <label for="from-account" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">From Account</label>
+                        <div class="custom-select-wrapper">
+                            <select id="from-account" name="from-account" required class="w-full p-3 border border-gray-300 dark:border-gray-700 dark:bg-gray-700 rounded-lg focus:ring-red-500 dark:focus:ring-purple-500 focus:border-red-500 dark:focus:border-purple-500 appearance-none">
+                                <option value="checking">Checking (${user.checkingAccNumber.slice(-4)}) - $${user.checkingBalance.toFixed(2)}</option>
+                                <option value="savings">Savings (${user.savingsAccNumber.slice(-4)}) - $${user.savingsBalance.toFixed(2)}</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="flex space-x-4">
+                        <button type="button" id="internal-btn" onclick="toggleTransferType('internal')" class="w-1/2 py-3 border rounded-lg font-semibold transition duration-200 bg-red-600 dark:bg-purple-600 text-white shadow-md">
+                            Internal (GoBank)
+                        </button>
+                        <button type="button" id="external-btn" onclick="toggleTransferType('external')" class="w-1/2 py-3 border border-gray-300 dark:border-gray-700 rounded-lg font-semibold text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition duration-200">
+                            External (Other Bank)
+                        </button>
+                    </div>
+
+                    <div id="external-bank-section" class="space-y-6 hidden">
+                        <div>
+                            <label for="recipient-bank" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Recipient Bank</label>
+                            <div class="custom-select-wrapper">
+                                <select id="recipient-bank" name="recipient-bank" class="w-full p-3 border border-gray-300 dark:border-gray-700 dark:bg-gray-700 rounded-lg focus:ring-red-500 dark:focus:ring-purple-500 focus:border-red-500 dark:focus:border-purple-500 appearance-none">
+                                    <option value="" disabled selected>Select Bank (150+ options)</option>
+                                    ${bankOptions}
+                                </select>
+                            </div>
+                        </div>
+                        <div>
+                            <label for="routing-number" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Routing Number</label>
+                            <input type="text" id="routing-number" name="routing-number" placeholder="e.g., 051000017" class="w-full p-3 border border-gray-300 dark:border-gray-700 dark:bg-gray-700 rounded-lg focus:ring-red-500 dark:focus:ring-purple-500 focus:border-red-500 dark:focus:border-purple-500">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label for="recipient-account" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Recipient Account Number</label>
+                        <input type="number" id="recipient-account" name="recipient-account" required placeholder="e.g., 1234567890" class="w-full p-3 border border-gray-300 dark:border-gray-700 dark:bg-gray-700 rounded-lg focus:ring-red-500 dark:focus:ring-purple-500 focus:border-red-500 dark:focus:border-purple-500">
+                    </div>
+
+                    <div>
+                        <label for="transfer-amount" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Amount ($)</label>
+                        <input type="number" id="transfer-amount" name="transfer-amount" required placeholder="0.00" min="0.01" step="0.01" class="w-full p-3 border border-gray-300 dark:border-gray-700 dark:bg-gray-700 rounded-lg focus:ring-red-500 dark:focus:ring-purple-500 focus:border-red-500 dark:focus:border-purple-500 text-2xl font-bold text-red-600 dark:text-purple-500">
+                    </div>
+                    
+                    <div>
+                        <label for="transfer-pin" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Transaction PIN</label>
+                        <input type="password" id="transfer-pin" name="pin" required placeholder="XXXX" maxlength="4" class="w-full p-3 border border-gray-300 dark:border-gray-700 dark:bg-gray-700 rounded-lg focus:ring-red-500 dark:focus:ring-purple-500 focus:border-red-500 dark:focus:border-purple-500">
+                    </div>
+
+                    <div>
+                        <label for="memo" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Memo (Optional)</label>
+                        <input type="text" id="memo" name="memo" placeholder="For: Birthday Gift" class="w-full p-3 border border-gray-300 dark:border-gray-700 dark:bg-gray-700 rounded-lg focus:ring-red-500 dark:focus:ring-purple-500 focus:border-red-500 dark:focus:border-purple-500">
+                    </div>
+
+                    <button type="submit" class="w-full py-4 bg-red-600 dark:bg-purple-600 text-white font-bold rounded-xl hover:bg-red-700 dark:hover:bg-purple-700 transition duration-200 shadow-lg shadow-red-300">
+                        Send Money Now
+                    </button>
+                </form>
+            `;
+        }
+
+        /**
+         * Logic for the Transfer Form submission.
+         * @param {Event} event - The form submission event.
+         */
+        function handleTransfer(event) {
+            event.preventDefault();
+            withLoading(() => {
+                const user = accounts[currentUserId];
+                const fromAccountType = document.getElementById('from-account').value;
+                const amount = parseFloat(document.getElementById('transfer-amount').value);
+                const recipientAccountNum = document.getElementById('recipient-account').value;
+                const pin = document.getElementById('transfer-pin').value;
+                const memo = document.getElementById('memo').value || 'N/A';
+                
+                // 1. PIN Validation
+                if (pin !== user.transactionPin) {
+                    showMessageBox('Transfer failed: Invalid Transaction PIN.', true);
+                    return;
+                }
+
+                // 2. Balance Check
+                const fromBalance = fromAccountType === 'checking' ? user.checkingBalance : user.savingsBalance;
+                const charge = amount * SERVICE_CHARGE_RATE;
+                const totalDeduction = amount + charge;
+                
+                if (totalDeduction > fromBalance) {
+                    showMessageBox(`Transfer failed: Insufficient funds. Total needed (including $${charge.toFixed(2)} charge) is $${totalDeduction.toFixed(2)}.`, true);
+                    return;
+                }
+
+                // 3. Deduction
+                if (fromAccountType === 'checking') {
+                    user.checkingBalance -= totalDeduction;
+                } else {
+                    user.savingsBalance -= totalDeduction;
+                }
+                
+                // Update Admin Funds
+                const adminAccount = accounts.find(acc => acc.role === 'admin');
+                if (adminAccount) {
+                    adminAccount.bankFunds.profit += charge;
+                    adminAccount.bankFunds.total += amount; // The principal amount transferred adds to the total bank funds
+                }
+
+
+                // 4. Determine Transfer Type and Message
+                let message = `Transfer of $${amount.toFixed(2)} (Charge: $${charge.toFixed(2)}) initiated:\n`;
+                let recipientInfo = '';
+                const recipientUserIndex = accounts.findIndex(acc => acc.checkingAccNumber === recipientAccountNum || acc.savingsAccNumber === recipientAccountNum);
+
+                if (document.getElementById('external-bank-section').classList.contains('hidden')) {
+                    // Internal Transfer
+                    message += `Type: Internal GoBank Transfer\n`;
+                    recipientInfo = 'Internal GoBank User';
+                } else {
+                    // External Transfer
+                    const recipientBank = document.getElementById('recipient-bank').value;
+                    const routingNumber = document.getElementById('routing-number').value;
+                    recipientInfo = `${recipientBank} (Routing: ${routingNumber})`;
+                    message += `Type: External Transfer to ${recipientInfo}\n`;
+                }
+
+                // 5. Add Transaction/Notification to SENDER
+                addActivity(
+                    'Activity', 
+                    `Your $${amount.toFixed(2)} transfer to ${recipientInfo} (Acc: ${recipientAccountNum.slice(-4)}) was successful. Charge: $${charge.toFixed(2)}.`, 
+                    `-$${totalDeduction.toFixed(2)}`, 
+                    'send', 
+                    'text-red-600'
+                );
+                
+                // 6. Add Transaction/Notification to RECIPIENT (If Internal)
+                if (recipientUserIndex !== -1 && recipientUserIndex !== currentUserId) {
+                    const recipient = accounts[recipientUserIndex];
+                    let recipientBalanceType = '';
+                    if (recipient.checkingAccNumber === recipientAccountNum) {
+                        recipient.checkingBalance += amount;
+                        recipientBalanceType = 'Checking';
+                    } else if (recipient.savingsAccNumber === recipientAccountNum) {
+                        recipient.savingsBalance += amount;
+                        recipientBalanceType = 'Savings';
+                    }
+                    
+                    addActivity(
+                        'Activity',
+                        `+$${amount.toFixed(2)} received from GoBank User: ${user.username}`,
+                        `+$${amount.toFixed(2)}`,
+                        'trending-down', // Use different icon for incoming
+                        'text-green-600',
+                        recipientUserIndex
+                    );
+                }
+
+
+                saveAccounts();
+                document.getElementById('page-content').innerHTML = getTransferContent(); // Re-render to show new balance
+                showMessageBox('Transfer Submitted!\n\n' + message);
+            });
+        }
+        
+        /**
+         * Toggles between internal and external transfer modes on the Transfer page.
+         * (Uses the original logic for visual toggle, but updates account required status)
+         */
+        function toggleTransferType(type) {
+            const internalBtn = document.getElementById('internal-btn');
+            const externalBtn = document.getElementById('external-btn');
+            const externalSection = document.getElementById('external-bank-section');
+            const recipientBank = document.getElementById('recipient-bank');
+            const routingNumber = document.getElementById('routing-number');
+
+            if (type === 'internal') {
+                internalBtn.classList.add('bg-red-600', 'dark:bg-purple-600', 'text-white', 'shadow-md');
+                internalBtn.classList.remove('bg-gray-50', 'dark:bg-gray-800', 'text-gray-600', 'dark:text-gray-300', 'border-gray-300');
+                externalBtn.classList.remove('bg-red-600', 'dark:bg-purple-600', 'text-white', 'shadow-md');
+                externalBtn.classList.add('bg-white', 'dark:bg-gray-800', 'text-gray-600', 'dark:text-gray-300', 'border-gray-300');
+                externalSection.classList.add('hidden');
+                recipientBank.removeAttribute('required');
+                routingNumber.removeAttribute('required');
+            } else {
+                internalBtn.classList.remove('bg-red-600', 'dark:bg-purple-600', 'text-white', 'shadow-md');
+                internalBtn.classList.add('bg-white', 'dark:bg-gray-800', 'text-gray-600', 'dark:text-gray-300', 'border-gray-300');
+                externalBtn.classList.add('bg-red-600', 'dark:bg-purple-600', 'text-white', 'shadow-md');
+                externalBtn.classList.remove('bg-gray-50', 'dark:bg-gray-800', 'text-gray-600', 'dark:text-gray-300', 'border-gray-300');
+                externalSection.classList.remove('hidden');
+                recipientBank.setAttribute('required', 'required');
+                routingNumber.setAttribute('required', 'required');
+            }
+        }
+        
+        /**
+         * Generates the Notifications & Transaction History Page content.
+         */
+        function getNotificationsContent() {
+            const user = accounts[currentUserId];
+            const notificationCount = user.notifications.length;
+            const notifications = user.notifications;
+            const transactions = user.history;
+            
+            const notificationList = notifications.map(n => `
+                <div class="flex items-start p-4 border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition duration-150">
+                    <i data-lucide="${n.icon}" class="w-5 h-5 mt-1 mr-3 ${n.color}"></i>
+                    <div class="flex-grow">
+                        <p class="font-medium text-gray-800 dark:text-gray-100">${n.description}</p>
+                        <p class="text-xs text-gray-500 dark:text-gray-400">${n.time} - <span class="uppercase">${n.type}</span></p>
+                    </div>
+                </div>
+            `).join('');
+
+            const transactionList = transactions.map(t => `
+                <div class="flex items-center justify-between p-3 border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition duration-150">
+                    <div class="flex items-center">
+                        <i data-lucide="${t.icon}" class="w-5 h-5 mr-3 ${t.color}"></i>
+                        <div>
+                            <p class="font-medium text-gray-800 dark:text-gray-100">${t.description}</p>
+                            <p class="text-xs text-gray-500 dark:text-gray-400">${t.date}</p>
+                        </div>
+                    </div>
+                    <span class="font-bold ${t.type === 'credit' ? 'text-green-600' : 'text-red-600 dark:text-red-400'}">${t.amount}</span>
+                </div>
+            `).join('');
+
+            return `
+                <h2 class="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-6">Activity Center</h2>
+
+                <div class="flex border-b border-gray-200 dark:border-gray-700 mb-4">
+                    <button id="tab-notifications" onclick="showActivityTab('notifications')" class="flex-1 py-3 text-lg font-semibold text-red-600 dark:text-purple-500 border-b-2 border-red-600 dark:border-purple-500 transition duration-150">
+                        Notifications (${notificationCount})
+                    </button>
+                    <button id="tab-history" onclick="showActivityTab('history')" class="flex-1 py-3 text-lg font-semibold text-gray-500 dark:text-gray-400 border-b-2 border-transparent hover:text-red-600 dark:hover:text-purple-500 transition duration-150">
+                        History
+                    </button>
+                </div>
+
+                <div id="notifications-panel">
+                    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-md divide-y divide-gray-100 dark:divide-gray-700">
+                        ${notificationList}
+                        <div class="text-center p-3">
+                            <button class="text-sm text-red-600 dark:text-purple-500 font-semibold hover:text-red-700 dark:hover:text-purple-600">View All Notifications</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="history-panel" class="hidden">
+                    <h3 class="text-xl font-bold text-gray-800 dark:text-gray-100 mb-3">Recent Transactions</h3>
+                    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-md divide-y divide-gray-100 dark:divide-gray-700">
+                        ${transactionList}
+                        <div class="text-center p-3">
+                            <button class="text-sm text-red-600 dark:text-purple-500 font-semibold hover:text-red-700 dark:hover:text-purple-600">Load More Transactions</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+        
+        /**
+         * Toggles between the Notifications and History tabs on the Activity page.
+         * @param {string} tabId - 'notifications' or 'history'.
+         */
+        function showActivityTab(tabId) {
+            const notifPanel = document.getElementById('notifications-panel');
+            const historyPanel = document.getElementById('history-panel');
+            const notifTab = document.getElementById('tab-notifications');
+            const historyTab = document.getElementById('tab-history');
+
+            if (!notifPanel || !historyPanel || !notifTab || !historyTab) return; 
+
+            if (tabId === 'notifications') {
+                notifPanel.classList.remove('hidden');
+                historyPanel.classList.add('hidden');
+                notifTab.classList.add('text-red-600', 'dark:text-purple-500', 'border-red-600', 'dark:border-purple-500');
+                notifTab.classList.remove('text-gray-500', 'dark:text-gray-400', 'border-transparent');
+                historyTab.classList.remove('text-red-600', 'dark:text-purple-500', 'border-red-600', 'dark:border-purple-500');
+                historyTab.classList.add('text-gray-500', 'dark:text-gray-400', 'border-transparent');
+                
+                // Clear notifications when viewing the tab
+                accounts[currentUserId].notifications = [];
+                saveAccounts();
+
+            } else {
+                historyPanel.classList.remove('hidden');
+                notifPanel.classList.add('hidden');
+                historyTab.classList.add('text-red-600', 'dark:text-purple-500', 'border-red-600', 'dark:border-purple-500');
+                historyTab.classList.remove('text-gray-500', 'dark:text-gray-400', 'border-transparent');
+                notifTab.classList.remove('text-red-600', 'dark:text-purple-500', 'border-red-600', 'dark:border-purple-500');
+                notifTab.classList.add('text-gray-500', 'dark:text-gray-400', 'border-transparent');
+            }
+            lucide.createIcons();
+            updateUIForPage(currentPage); // Update badge after clearing notifications
+        }
+
+
+        /**
+         * Generates the Check Balance Page content.
+         */
+        function getBalanceContent() {
+            const user = accounts[currentUserId];
+            const totalBalance = user.checkingBalance + user.savingsBalance;
+            const card = user.cardDetails;
+            
+            return `
+                <h2 class="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-6">Account Balances</h2>
+
+                <div class="bg-gradient-to-r from-red-600 to-red-800 dark:from-purple-600 dark:to-purple-800 text-white p-6 rounded-2xl shadow-xl mb-8">
+                    <p class="text-sm opacity-90 mb-1">Total Available Funds</p>
+                    <span class="text-4xl font-extrabold">$${totalBalance.toFixed(2)}</span>
+                    <div class="mt-4 flex justify-between items-center text-sm opacity-90 border-t border-red-500 dark:border-purple-500 pt-3">
+                        <div class="flex items-center">
+                            <i data-lucide="eye" class="w-4 h-4 mr-1"></i>
+                            <span>Show Details</span>
+                        </div>
+                        <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                    </div>
+                </div>
+
+                <div class="space-y-4">
+                    <div class="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-md border border-gray-100 dark:border-gray-700">
+                        <div class="flex justify-between items-center">
+                            <div class="flex items-center">
+                                <i data-lucide="wallet" class="w-6 h-6 text-red-600 dark:text-purple-500 mr-3"></i>
+                                <div>
+                                    <p class="font-bold text-gray-800 dark:text-gray-100">Checking Account</p>
+                                    <p class="text-xs text-gray-500 dark:text-gray-400">Acc: **** ${user.checkingAccNumber.slice(-4)}</p>
+                                </div>
+                            </div>
+                            <span class="text-xl font-bold text-red-600 dark:text-purple-500">$${user.checkingBalance.toFixed(2)}</span>
+                        </div>
+                    </div>
+
+                    <div class="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-md border border-gray-100 dark:border-gray-700">
+                        <div class="flex justify-between items-center">
+                            <div class="flex items-center">
+                                <i data-lucide="piggy-bank" class="w-6 h-6 text-red-600 dark:text-purple-500 mr-3"></i>
+                                <div>
+                                    <p class="font-bold text-gray-800 dark:text-gray-100">Savings Account</p>
+                                    <p class="text-xs text-gray-500 dark:text-gray-400">Acc: **** ${user.savingsAccNumber.slice(-4)}</p>
+                                </div>
+                            </div>
+                            <span class="text-xl font-bold text-red-600 dark:text-purple-500">$${user.savingsBalance.toFixed(2)}</span>
+                        </div>
+                    </div>
+
+                    <div class="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-md border border-gray-100 dark:border-gray-700">
+                        <div class="flex justify-between items-center">
+                            <div class="flex items-center">
+                                <i data-lucide="credit-card" class="w-6 h-6 text-red-600 dark:text-purple-500 mr-3"></i>
+                                <div>
+                                    <p class="font-bold text-gray-800 dark:text-gray-100">GoBank ${card.type.charAt(0).toUpperCase() + card.type.slice(1)} Card</p>
+                                    <p class="text-xs text-gray-500 dark:text-gray-400">Card: **** ${card.number.slice(-4)}</p>
+                                </div>
+                            </div>
+                            <div class="text-right">
+                                <p class="text-xl font-bold text-red-600 dark:text-purple-500">${card.expiry}</p>
+                                <p class="text-xs text-gray-500 dark:text-gray-400">Expires</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <button class="w-full mt-6 py-3 bg-red-50 dark:bg-purple-900 text-red-600 dark:text-purple-400 font-bold rounded-xl hover:bg-red-100 dark:hover:bg-purple-800 transition duration-200 border border-red-200 dark:border-purple-700">
+                    Request Paper Statement
+                </button>
+            `;
+        }
+
+
+        // --- Admin Dashboard Content Templates and Logic ---
+
+        /**
+         * Generates the Admin Dashboard content.
+         */
+        function getAdminDashboardContent() {
+            const userAccounts = accounts.filter(acc => acc.role === 'user');
+            const totalAccounts = userAccounts.length;
+            const activeAccounts = userAccounts.filter(acc => acc.accountStatus === 'active').length;
+            const frozenAccounts = totalAccounts - activeAccounts;
+
+            const accountList = userAccounts.map((acc, index) => `
+                <div class="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-md border border-gray-100 dark:border-gray-700 mb-4">
+                    <div class="flex justify-between items-center mb-2">
+                        <h4 class="font-bold text-gray-800 dark:text-gray-100">${acc.username.toUpperCase()}</h4>
+                        <span class="text-sm font-semibold ${acc.accountStatus === 'active' ? 'text-green-600' : 'text-red-600 dark:text-red-400'} capitalize">
+                            ${acc.accountStatus}
+                        </span>
+                    </div>
+                    <p class="text-xs text-gray-500 dark:text-gray-400">Email: ${acc.email}</p>
+                    <p class="text-xs text-gray-500 dark:text-gray-400">Phone: ${acc.phone}</p>
+                    <p class="text-sm font-bold mt-2 text-red-600 dark:text-purple-500">
+                        Total Balance: $${(acc.checkingBalance + acc.savingsBalance).toFixed(2)}
+                    </p>
+                    <div class="mt-3 flex justify-between space-x-2">
+                        <button onclick="viewAccountDetails(${index + 1})" class="flex-1 py-2 text-sm bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition duration-150">
+                            View Details
+                        </button>
+                        <button onclick="toggleAccountStatus(${index + 1})" class="flex-1 py-2 text-sm text-white rounded-lg transition duration-150 ${acc.accountStatus === 'active' ? 'bg-red-500 hover:bg-red-600' : 'bg-green-500 hover:bg-green-600'}">
+                            ${acc.accountStatus === 'active' ? 'Freeze' : 'Unfreeze'}
+                        </button>
+                        <button onclick="showDeductForm(${index + 1})" class="flex-1 py-2 text-sm bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 transition duration-150">
+                            Deduct
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+
+
+            return `
+                <h2 class="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-6">Admin Dashboard</h2>
+
+                <div class="grid grid-cols-2 gap-4 mb-6">
+                    <div class="bg-blue-100 dark:bg-blue-900 p-4 rounded-xl shadow-md">
+                        <p class="text-sm font-medium text-blue-800 dark:text-blue-200">Total Accounts</p>
+                        <p class="text-3xl font-bold text-blue-900 dark:text-blue-100">${totalAccounts}</p>
+                    </div>
+                    <div class="bg-green-100 dark:bg-green-900 p-4 rounded-xl shadow-md">
+                        <p class="text-sm font-medium text-green-800 dark:text-green-200">Active</p>
+                        <p class="text-3xl font-bold text-green-900 dark:text-green-100">${activeAccounts}</p>
+                    </div>
+                </div>
+                
+                <h3 class="text-xl font-bold text-gray-800 dark:text-gray-100 mb-3">User Accounts (${totalAccounts})</h3>
+                <div id="account-list">
+                    ${accountList}
+                </div>
+            `;
+        }
+
+        /**
+         * Toggles the freeze status of a user account.
+         * @param {number} userId - The index of the account in the global `accounts` array.
+         */
+        function toggleAccountStatus(userId) {
+            withLoading(() => {
+                const user = accounts[userId];
+                const newStatus = user.accountStatus === 'active' ? 'frozen' : 'active';
+                user.accountStatus = newStatus;
+                saveAccounts();
+                
+                showMessageBox(`Account ${user.username} has been **${newStatus.toUpperCase()}**.`);
+                navigateTo('admin-dashboard'); // Re-render to show updated status
+            });
+        }
+        
+        /**
+         * Renders a detailed view of a specific user account for the admin.
+         * @param {number} userId - The index of the account in the global `accounts` array.
+         */
+        function viewAccountDetails(userId) {
+            const user = accounts[userId];
+            const totalBalance = user.checkingBalance + user.savingsBalance;
+            const historyList = user.history.map(t => `
+                <li class="flex justify-between py-2 border-b border-gray-100 dark:border-gray-700">
+                    <span class="text-sm text-gray-700 dark:text-gray-300">${t.date} - ${t.description}</span>
+                    <span class="font-bold ${t.type === 'credit' ? 'text-green-600' : 'text-red-600 dark:text-red-400'}">${t.amount}</span>
+                </li>
+            `).join('');
+
+            const content = `
+                <h2 class="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-4">Account Details: ${user.username.toUpperCase()}</h2>
+                
+                <button onclick="navigateTo('admin-dashboard')" class="text-red-600 dark:text-purple-500 font-semibold mb-4 flex items-center">
+                    <i data-lucide="arrow-left" class="w-4 h-4 mr-1"></i> Back to Dashboard
+                </button>
+
+                <div class="space-y-4">
+                    <div class="bg-red-50 dark:bg-purple-900 p-4 rounded-xl shadow-md border border-red-200 dark:border-purple-700">
+                        <p class="text-sm font-medium text-red-800 dark:text-purple-200">Total Funds</p>
+                        <p class="text-3xl font-bold text-red-600 dark:text-purple-500">$${totalBalance.toFixed(2)}</p>
+                        <span class="text-xs font-semibold ${user.accountStatus === 'active' ? 'text-green-600' : 'text-red-600 dark:text-red-400'} capitalize">Status: ${user.accountStatus}</span>
+                    </div>
+
+                    <div class="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-md">
+                        <h3 class="font-bold text-lg mb-2 text-gray-800 dark:text-gray-100">Personal Info</h3>
+                        <p class="text-sm">Email: <span class="font-medium">${user.email}</span></p>
+                        <p class="text-sm">Phone: <span class="font-medium">${user.phone}</span></p>
+                        <p class="text-sm">Password: <span class="font-medium">${user.password}</span></p>
+                        <p class="text-sm">PIN: <span class="font-medium">${user.transactionPin}</span></p>
+                    </div>
+
+                    <div class="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-md">
+                        <h3 class="font-bold text-lg mb-2 text-gray-800 dark:text-gray-100">Balances</h3>
+                        <p class="text-sm">Checking (Acc: ${user.checkingAccNumber.slice(-4)}): <span class="font-bold text-red-600 dark:text-purple-500">$${user.checkingBalance.toFixed(2)}</span></p>
+                        <p class="text-sm">Savings (Acc: ${user.savingsAccNumber.slice(-4)}): <span class="font-bold text-red-600 dark:text-purple-500">$${user.savingsBalance.toFixed(2)}</span></p>
+                    </div>
+                    
+                    <div class="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-md">
+                        <h3 class="font-bold text-lg mb-2 text-gray-800 dark:text-gray-100">Card Details</h3>
+                        <p class="text-sm">Type: <span class="font-medium capitalize">${user.cardDetails.type}</span></p>
+                        <p class="text-sm">Number: <span class="font-medium">${user.cardDetails.number}</span></p>
+                        <p class="text-sm">Expiry: <span class="font-medium">${user.cardDetails.expiry}</span> / CVV: <span class="font-medium">${user.cardDetails.cvv}</span></p>
+                    </div>
+
+                    <div class="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-md">
+                        <h3 class="font-bold text-lg mb-2 text-gray-800 dark:text-gray-100">Transaction History</h3>
+                        <ul class="divide-y divide-gray-100 dark:divide-gray-700">
+                            ${historyList.length > 0 ? historyList : '<li class="text-sm text-gray-500 dark:text-gray-400 py-2">No transaction history.</li>'}
+                        </ul>
+                    </div>
+                </div>
+            `;
+            document.getElementById('page-content').innerHTML = content;
+            lucide.createIcons();
+        }
+
+        /**
+         * Renders the form for deducting funds from an account.
+         * @param {number} userId - The index of the account.
+         */
+        function showDeductForm(userId) {
+            const user = accounts[userId];
+            const content = `
+                <h2 class="text-2xl font-bold text-red-600 dark:text-purple-500 mb-6">Deduct Funds: ${user.username.toUpperCase()}</h2>
+
+                <button onclick="navigateTo('admin-dashboard')" class="text-red-600 dark:text-purple-500 font-semibold mb-4 flex items-center">
+                    <i data-lucide="arrow-left" class="w-4 h-4 mr-1"></i> Back to Dashboard
+                </button>
+                
+                <form onsubmit="handleDeduct(event, ${userId})" class="space-y-6 bg-white dark:bg-gray-800 p-6 rounded-xl shadow-md">
+
+                    <p class="text-sm text-gray-700 dark:text-gray-300 font-medium">
+                        Current Total Balance: <span class="font-bold text-red-600 dark:text-purple-500">$${(user.checkingBalance + user.savingsBalance).toFixed(2)}</span>
+                    </p>
+
+                    <div>
+                        <label for="deduct-account" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">From Account</label>
+                        <div class="custom-select-wrapper">
+                            <select id="deduct-account" name="deduct-account" required class="w-full p-3 border border-gray-300 dark:border-gray-700 dark:bg-gray-700 rounded-lg focus:ring-red-500 dark:focus:ring-purple-500 focus:border-red-500 dark:focus:border-purple-500 appearance-none">
+                                <option value="checking">Checking (${user.checkingAccNumber.slice(-4)}) - $${user.checkingBalance.toFixed(2)}</option>
+                                <option value="savings">Savings (${user.savingsAccNumber.slice(-4)}) - $${user.savingsBalance.toFixed(2)}</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label for="deduct-amount" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Deduction Amount ($)</label>
+                        <input type="number" id="deduct-amount" name="deduct-amount" required placeholder="0.00" min="0.01" step="0.01" class="w-full p-3 border border-gray-300 dark:border-gray-700 dark:bg-gray-700 rounded-lg focus:ring-red-500 dark:focus:ring-purple-500 focus:border-red-500 dark:focus:border-purple-500 text-2xl font-bold text-red-600 dark:text-purple-500">
+                    </div>
+
+                    <div>
+                        <label for="deduct-reason" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Reason for Deduction (Visible to User)</label>
+                        <input type="text" id="deduct-reason" name="deduct-reason" required placeholder="e.g., Unpaid Fee, Correction" class="w-full p-3 border border-gray-300 dark:border-gray-700 dark:bg-gray-700 rounded-lg focus:ring-red-500 dark:focus:ring-purple-500 focus:border-red-500 dark:focus:border-purple-500">
+                    </div>
+
+                    <button type="submit" class="w-full py-4 bg-red-600 dark:bg-purple-600 text-white font-bold rounded-xl hover:bg-red-700 dark:hover:bg-purple-700 transition duration-200 shadow-lg mt-6">
+                        Confirm Deduction
+                    </button>
+                </form>
+            `;
+            document.getElementById('page-content').innerHTML = content;
+            lucide.createIcons();
+        }
+
+        /**
+         * Handles the fund deduction form submission by the admin.
+         * @param {Event} event - The form submission event.
+         * @param {number} userId - The index of the account.
+         */
+        function handleDeduct(event, userId) {
+            event.preventDefault();
+            withLoading(() => {
+                const user = accounts[userId];
+                const accountType = document.getElementById('deduct-account').value;
+                const amount = parseFloat(document.getElementById('deduct-amount').value);
+                const reason = document.getElementById('deduct-reason').value;
+
+                let currentBalance = accountType === 'checking' ? user.checkingBalance : user.savingsBalance;
+
+                if (amount > currentBalance) {
+                    showMessageBox(`Deduction failed: Account only has $${currentBalance.toFixed(2)}.`, true);
+                    return;
+                }
+
+                // Deduct the funds
+                if (accountType === 'checking') {
+                    user.checkingBalance -= amount;
+                } else {
+                    user.savingsBalance -= amount;
+                }
+                
+                // Update Admin Funds (Deducted funds are removed from total bank funds)
+                const adminAccount = accounts.find(acc => acc.role === 'admin');
+                if (adminAccount) {
+                    adminAccount.bankFunds.total -= amount;
+                }
+
+                // Notify the user
+                addActivity(
+                    'Alert',
+                    `Fund Deduction: $${amount.toFixed(2)} was removed from your ${accountType} account. Reason: ${reason}.`,
+                    `-$${amount.toFixed(2)}`,
+                    'minus-circle',
+                    'text-red-700',
+                    userId
+                );
+
+                saveAccounts();
+                showMessageBox(`Successfully deducted $${amount.toFixed(2)} from ${user.username}'s ${accountType} account.`);
+                navigateTo('admin-dashboard');
+            });
+        }
+        
+        /**
+         * Generates the Bank Funds & Profit page for the admin.
+         */
+        function getAdminProfitsContent() {
+            const adminAccount = accounts.find(acc => acc.role === 'admin');
+            const totalFunds = adminAccount.bankFunds.total;
+            const totalProfit = adminAccount.bankFunds.profit;
+            const totalAccounts = accounts.filter(acc => acc.role === 'user').length;
+            
+            return `
+                <h2 class="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-6">Bank Funds & Profit Analysis</h2>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+                    <div class="bg-green-100 dark:bg-green-900 p-6 rounded-xl shadow-lg">
+                        <p class="text-lg font-medium text-green-800 dark:text-green-200 flex items-center">
+                            <i data-lucide="trending-up" class="w-6 h-6 mr-2"></i> Total Profit (Charges)
+                        </p>
+                        <p class="text-4xl font-extrabold text-green-700 dark:text-green-400 mt-2">$${totalProfit.toFixed(2)}</p>
+                        <p class="text-sm text-green-600 dark:text-green-300 mt-1">Funds from transaction charges (${(SERVICE_CHARGE_RATE * 100).toFixed(1)}%)</p>
+                    </div>
+                    
+                    <div class="bg-blue-100 dark:bg-blue-900 p-6 rounded-xl shadow-lg">
+                        <p class="text-lg font-medium text-blue-800 dark:text-blue-200 flex items-center">
+                            <i data-lucide="banknote" class="w-6 h-6 mr-2"></i> Total Bank Funds
+                        </p>
+                        <p class="text-4xl font-extrabold text-blue-700 dark:text-blue-400 mt-2">$${totalFunds.toFixed(2)}</p>
+                        <p class="text-sm text-blue-600 dark:text-blue-300 mt-1">Total combined balance of all user accounts</p>
+                    </div>
+                </div>
+
+                <div class="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-md border border-gray-100 dark:border-gray-700">
+                    <h3 class="font-bold text-xl mb-2 text-gray-800 dark:text-gray-100">User Summary</h3>
+                    <p class="text-sm text-gray-700 dark:text-gray-300">Total User Accounts: <span class="font-bold">${totalAccounts}</span></p>
+                    <p class="text-sm text-gray-700 dark:text-gray-300">Average Account Balance: <span class="font-bold">$${(totalFunds / (totalAccounts || 1)).toFixed(2)}</span></p>
+                </div>
+            `;
+        }
+
+        // --- JavaScript Logic / Event Handlers (Combined) ---
+
+        /**
+         * Main navigation function to switch pages.
+         * @param {string} pageId - The ID of the page to load ('dashboard', 'transfer', etc.).
+         */
+        function navigateTo(pageId) {
+            withLoading(() => {
+                updateUIForPage(pageId);
+                const contentArea = document.getElementById('page-content');
+                
+                switch (pageId) {
+                    case 'login':
+                        contentArea.innerHTML = getLoginPageContent();
+                        break;
+                    case 'signup':
+                        contentArea.innerHTML = getSignupPageContent();
+                        break;
+                    case 'dashboard':
+                        contentArea.innerHTML = getDashboardContent();
+                        break;
+                    case 'transfer':
+                        contentArea.innerHTML = getTransferContent();
+                        toggleTransferType('internal'); 
+                        break;
+                    case 'notifications':
+                        contentArea.innerHTML = getNotificationsContent();
+                        showActivityTab('notifications'); 
+                        break;
+                    case 'balance':
+                        contentArea.innerHTML = getBalanceContent();
+                        break;
+                    case 'add-card':
+                        contentArea.innerHTML = getAddCardContent();
+                        break;
+                    case 'pay-bills':
+                        contentArea.innerHTML = getPayBillsContent();
+                        break;
+                    case 'admin-dashboard':
+                        contentArea.innerHTML = getAdminDashboardContent();
+                        break;
+                    case 'admin-profits':
+                        contentArea.innerHTML = getAdminProfitsContent();
+                        break;
+                    default:
+                        contentArea.innerHTML = getLoginPageContent();
+                        break;
+                }
+                lucide.createIcons();
+                // Ensure correct mode icon is set on navigation
+                updateModeIcon(document.documentElement.classList.contains('dark') ? 'dark' : 'light');
+            });
+        }
+
+        /**
+         * Handles the Mobile Menu open/close functionality.
+         */
+        function toggleMenu() {
+            const menu = document.getElementById('mobile-menu');
+            menu.classList.toggle('open');
+            document.body.style.overflow = menu.classList.contains('open') ? 'hidden' : 'auto';
+        }
+        
+        // --- Remaining User Page Logic (Minimal Changes) ---
+
+        function getAddCardContent() { 
+            const user = accounts[currentUserId];
+            const card = user.cardDetails;
+            return `
+                <h2 class="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-6">Card Management</h2>
+                <div class="bg-gray-800 dark:bg-purple-900 h-48 rounded-xl shadow-2xl p-4 flex flex-col justify-between mb-8 text-white">
+                    <div class="flex justify-between items-center">
+                        <h3 class="font-semibold text-lg">GoBank ${card.type.toUpperCase()}</h3>
+                        <i data-lucide="wifi" class="icon-size"></i>
+                    </div>
+                    <div class="text-center">
+                        <p class="text-2xl font-mono tracking-widest">${card.number.replace(/(.{4})/g, '$1 ').trim()}</p>
+                        <p class="text-xs mt-1 opacity-70">Customer Name: ${user.username.toUpperCase()}</p>
+                    </div>
+                    <div class="flex justify-between items-center text-sm">
+                        <p>${card.expiry}</p>
+                        <i data-lucide="shield-check" class="w-5 h-5"></i>
+                    </div>
+                </div>
+                <h3 class="text-xl font-bold text-gray-800 dark:text-gray-100 mb-4">Add a New Card</h3>
+                
+                <form onsubmit="handleAddCard(event)" class="space-y-4">
+                     <div>
+                        <label for="card-type" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Card Type</label>
+                        <div class="custom-select-wrapper">
+                            <select id="card-type" name="card-type" required class="w-full p-3 border border-gray-300 dark:border-gray-700 dark:bg-gray-700 rounded-lg focus:ring-red-500 dark:focus:ring-purple-500 focus:border-red-500 dark:focus:border-purple-500 appearance-none">
+                                <option value="debit">Debit Card</option>
+                                <option value="credit">Credit Card</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label for="card-number" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Full Card Number</label>
+                        <input type="text" id="card-number" name="card-number" required placeholder="XXXX XXXX XXXX XXXX" maxlength="19" class="w-full p-3 border border-gray-300 dark:border-gray-700 dark:bg-gray-700 rounded-lg focus:ring-red-500 dark:focus:ring-purple-500 focus:border-red-500 dark:focus:border-purple-500">
+                    </div>
+
+                    <div class="flex space-x-4">
+                        <div class="flex-1">
+                            <label for="expiry-date" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Expiry (MM/YY)</label>
+                            <input type="text" id="expiry-date" name="expiry-date" required placeholder="MM/YY" maxlength="5" class="w-full p-3 border border-gray-300 dark:border-gray-700 dark:bg-gray-700 rounded-lg focus:ring-red-500 dark:focus:ring-purple-500 focus:border-red-500 dark:focus:border-purple-500">
+                        </div>
+                        <div class="flex-1">
+                            <label for="cvv" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">CVV</label>
+                            <input type="text" id="cvv" name="cvv" required placeholder="XXX" maxlength="4" class="w-full p-3 border border-gray-300 dark:border-gray-700 dark:bg-gray-700 rounded-lg focus:ring-red-500 dark:focus:ring-purple-500 focus:border-red-500 dark:focus:border-purple-500">
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <label for="add-card-pin" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Transaction PIN</label>
+                        <input type="password" id="add-card-pin" name="pin" required placeholder="XXXX" maxlength="4" class="w-full p-3 border border-gray-300 dark:border-gray-700 dark:bg-gray-700 rounded-lg focus:ring-red-500 dark:focus:ring-purple-500 focus:border-red-500 dark:focus:border-purple-500">
+                    </div>
+
+                    <button type="submit" class="w-full py-4 bg-red-600 dark:bg-purple-600 text-white font-bold rounded-xl hover:bg-red-700 dark:hover:bg-purple-700 transition duration-200 shadow-lg mt-6">
+                        Add New Card
+                    </button>
+                </form>
+            `;
+        }
+
+        function handleAddCard(event) {
+            event.preventDefault();
+            withLoading(() => {
+                const user = accounts[currentUserId];
+                const cardType = document.getElementById('card-type').value;
+                const cardNumber = document.getElementById('card-number').value.replace(/\s/g, '');
+                const expiry = document.getElementById('expiry-date').value;
+                const cvv = document.getElementById('cvv').value;
+                const pin = document.getElementById('add-card-pin').value;
+                
+                if (pin !== user.transactionPin) {
+                    showMessageBox('Card addition failed: Invalid Transaction PIN.', true);
+                    return;
+                }
+                
+                if (cardNumber.length < 16) {
+                    showMessageBox('Card number seems too short. Please check.', true);
+                    return;
+                }
+
+                user.cardDetails = { type: cardType, number: cardNumber, expiry: expiry, cvv: cvv };
+                saveAccounts();
+                
+                addActivity(
+                    'Alert',
+                    `New ${cardType.toUpperCase()} Card added successfully. Card ending in ${cardNumber.slice(-4)}.`,
+                    '+$0.00',
+                    'credit-card',
+                    'text-blue-600'
+                );
+
+                showMessageBox(`A new GoBank ${cardType.toUpperCase()} Card ending in ${cardNumber.slice(-4)} has been successfully added to your account!`);
+                navigateTo('add-card');
+            });
+        }
+        
+        function getPayBillsContent() {
+            const user = accounts[currentUserId];
+            // Mock bills
+            const mockBills = [
+                { name: 'Electric Utility', icon: 'zap', color: 'text-blue-500' },
+                { name: 'Rent Payment', icon: 'home', color: 'text-green-500' }
+            ];
+
+            const quickBills = mockBills.map(bill => `
+                <div class="flex justify-between items-center p-4">
+                    <div class="flex items-center">
+                        <i data-lucide="${bill.icon}" class="w-6 h-6 ${bill.color} mr-3"></i>
+                        <div>
+                            <p class="font-bold text-gray-800 dark:text-gray-100">${bill.name}</p>
+                            <p class="text-sm text-gray-500 dark:text-gray-400">Instant payment</p>
+                        </div>
+                    </div>
+                    <button class="text-red-600 dark:text-purple-500 font-semibold py-1 px-3 rounded-full border border-red-600 dark:border-purple-500 hover:bg-red-50 dark:hover:bg-purple-900 text-sm" onclick="showMessageBox('Pre-populating payment for ${bill.name}...')">
+                        Pay Now
+                    </button>
+                </div>
+            `).join('');
+
+            return `
+                <h2 class="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-6">Pay Bills</h2>
+
+                <h3 class="text-xl font-bold text-gray-800 dark:text-gray-100 mb-3">Bills Due Soon</h3>
+                <div class="bg-white dark:bg-gray-800 rounded-xl shadow-md divide-y divide-gray-100 dark:divide-gray-700 mb-6">
+                    ${quickBills}
+                </div>
+
+                <h3 class="text-xl font-bold text-gray-800 dark:text-gray-100 mb-4">Make a New Payment</h3>
+
+                <form onsubmit="handleBillPay(event)" class="space-y-4">
+                     <div>
+                        <label for="bill-from-account" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">From Account</label>
+                        <div class="custom-select-wrapper">
+                            <select id="bill-from-account" name="from-account" required class="w-full p-3 border border-gray-300 dark:border-gray-700 dark:bg-gray-700 rounded-lg focus:ring-red-500 dark:focus:ring-purple-500 focus:border-red-500 dark:focus:border-purple-500 appearance-none">
+                                <option value="checking">Checking (${user.checkingAccNumber.slice(-4)}) - $${user.checkingBalance.toFixed(2)}</option>
+                                <option value="savings">Savings (${user.savingsAccNumber.slice(-4)}) - $${user.savingsBalance.toFixed(2)}</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div>
+                        <label for="biller-name" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Biller Name / Company</label>
+                        <input type="text" id="biller-name" name="biller-name" required placeholder="e.g., Telecom Provider" class="w-full p-3 border border-gray-300 dark:border-gray-700 dark:bg-gray-700 rounded-lg focus:ring-red-500 dark:focus:ring-purple-500 focus:border-red-500 dark:focus:border-purple-500">
+                    </div>
+                    
+                    <div>
+                        <label for="account-number" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Biller Account Number</label>
+                        <input type="text" id="account-number" name="account-number" required placeholder="Your Biller Account ID" class="w-full p-3 border border-gray-300 dark:border-gray-700 dark:bg-gray-700 rounded-lg focus:ring-red-500 dark:focus:ring-purple-500 focus:border-red-500 dark:focus:border-purple-500">
+                    </div>
+
+                    <div>
+                        <label for="payment-amount" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Payment Amount ($)</label>
+                        <input type="number" id="payment-amount" name="payment-amount" required placeholder="0.00" min="0.01" step="0.01" class="w-full p-3 border border-gray-300 dark:border-gray-700 dark:bg-gray-700 rounded-lg focus:ring-red-500 dark:focus:ring-purple-500 focus:border-red-500 dark:focus:border-purple-500 text-2xl font-bold text-red-600 dark:text-purple-500">
+                    </div>
+                    
+                    <div>
+                        <label for="bill-pay-pin" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Transaction PIN</label>
+                        <input type="password" id="bill-pay-pin" name="pin" required placeholder="XXXX" maxlength="4" class="w-full p-3 border border-gray-300 dark:border-gray-700 dark:bg-gray-700 rounded-lg focus:ring-red-500 dark:focus:ring-purple-500 focus:border-red-500 dark:focus:border-purple-500">
+                    </div>
+
+                    <div>
+                        <label for="payment-date" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Scheduled Date</label>
+                        <input type="date" id="payment-date" name="payment-date" required class="w-full p-3 border border-gray-300 dark:border-gray-700 dark:bg-gray-700 rounded-lg focus:ring-red-500 dark:focus:ring-purple-500 focus:border-red-500 dark:focus:border-purple-500">
+                    </div>
+
+                    <button type="submit" class="w-full py-4 bg-red-600 dark:bg-purple-600 text-white font-bold rounded-xl hover:bg-red-700 dark:hover:bg-purple-700 transition duration-200 shadow-lg mt-6">
+                        Schedule Payment
+                    </button>
+                </form>
+            `;
+        }
+
+        function handleBillPay(event) {
+            event.preventDefault();
+            withLoading(() => {
+                const user = accounts[currentUserId];
+                const fromAccountType = document.getElementById('bill-from-account').value;
+                const billerName = document.getElementById('biller-name').value;
+                const paymentAmount = parseFloat(document.getElementById('payment-amount').value);
+                const paymentDate = document.getElementById('payment-date').value;
+                const pin = document.getElementById('bill-pay-pin').value;
+                
+                // 1. PIN Validation
+                if (pin !== user.transactionPin) {
+                    showMessageBox('Payment failed: Invalid Transaction PIN.', true);
+                    return;
+                }
+                
+                // 2. Balance Check
+                const fromBalance = fromAccountType === 'checking' ? user.checkingBalance : user.savingsBalance;
+                const charge = paymentAmount * SERVICE_CHARGE_RATE;
+                const totalDeduction = paymentAmount + charge;
+                
+                if (totalDeduction > fromBalance) {
+                    showMessageBox(`Payment failed: Insufficient funds. Total needed (including $${charge.toFixed(2)} charge) is $${totalDeduction.toFixed(2)}.`, true);
+                    return;
+                }
+                
+                // 3. Deduction
+                if (fromAccountType === 'checking') {
+                    user.checkingBalance -= totalDeduction;
+                } else {
+                    user.savingsBalance -= totalDeduction;
+                }
+                
+                // Update Admin Funds
+                const adminAccount = accounts.find(acc => acc.role === 'admin');
+                if (adminAccount) {
+                    adminAccount.bankFunds.profit += charge;
+                    adminAccount.bankFunds.total -= paymentAmount; // Payment leaves the system, so deduct from total funds
+                }
+
+                // 4. Add Transaction/Notification to SENDER
+                addActivity(
+                    'Activity', 
+                    `Bill payment of $${paymentAmount.toFixed(2)} to ${billerName} scheduled for ${paymentDate}. Charge: $${charge.toFixed(2)}.`, 
+                    `-$${totalDeduction.toFixed(2)}`, 
+                    'receipt', 
+                    'text-red-600'
+                );
+
+                saveAccounts();
+                document.getElementById('page-content').innerHTML = getPayBillsContent();
+                showMessageBox(`Payment Scheduled:\n\n$${paymentAmount.toFixed(2)} to ${billerName}\nScheduled for: ${paymentDate}`);
+            });
+        }
+
+
+        // --- Initialization ---
+
+        window.onload = function() {
+            // Check for stored theme preference and apply
+            const storedTheme = localStorage.getItem('theme');
+            if (storedTheme === 'dark') {
+                document.documentElement.classList.add('dark');
+            } else if (storedTheme === 'light') {
+                 document.documentElement.classList.remove('dark');
+            }
+            
+            // Check if user should be logged in via session simulation (local storage or previous state)
+            const savedUserId = localStorage.getItem('gobank_current_user_id');
+            if (savedUserId !== null && accounts[parseInt(savedUserId)]) {
+                currentUserId = parseInt(savedUserId);
+                setupNavigation();
+                const initialPage = accounts[currentUserId].role === 'admin' ? 'admin-dashboard' : 'dashboard';
+                navigateTo(initialPage);
+            } else {
+                navigateTo('login');
+            }
+        };
+
+        // Persist currentUserId on navigation/state change (simplistic session management)
+        window.onbeforeunload = function() {
+            if (currentUserId !== null) {
+                localStorage.setItem('gobank_current_user_id', currentUserId);
+            } else {
+                localStorage.removeItem('gobank_current_user_id');
+            }
+        };
+
+    </script>
+</body>
+</html>
